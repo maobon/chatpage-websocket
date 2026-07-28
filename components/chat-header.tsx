@@ -48,7 +48,7 @@ export default function ChatHeader({
           <MessageSquareText size={19} />
         </div>
         <div>
-          <h1 className="font-semibold">WebSocket Chat</h1>
+          <h1 className="font-semibold">Chat Room</h1>
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <span
               className={`h-1.5 w-1.5 rounded-full ${currentStatus.dotClassName}`}

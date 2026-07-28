@@ -8,9 +8,19 @@ import {
     useRef,
     useState,
 } from "react";
-import { Image, Loader2, SendHorizontal } from "lucide-react";
+import { Image, Loader2, SendHorizontal, Smile } from "lucide-react";
 import type { ConnectionStatus } from "../hooks/use-websocket-chat";
 import { chatApiUrl, AuthSession } from "../lib/auth";
+
+const COMMON_EMOJIS = [
+    "😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😙", "😚", "☺️", "🙂", "🤗", "🤩",
+    "🤔", "🤨", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒",
+    "😓", "😔", "😕", "🙃", "🤑", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰",
+    "😱", "🥵", "🥶", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "😇", "🤠", "🤡", "🥳", "🥴", "🥺",
+    "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "👿", "👹", "👺", "💀", "👻", "👽", "🤖", "💩", "😺", "😸", "😹", "😻", "😼", "😽", "🙀",
+    "😿", "😾", "🙈", "🙉", "🙊", "💋", "💌", "💘", "💝", "💖", "💗", "💓", "💞", "💕", "💟", "❣️", "💔", "❤️", "🧡", "💛", "💚",
+    "💙", "💜", "🖤", "💯", "💢", "💥", "💫", "💦", "💨", "🕳️", "💣", "💬", "👁️‍🗨️", "🗨️", "🗯️", "💭", "💤"
+];
 
 type ChatComposerProps = {
     authSession: AuthSession;
@@ -36,7 +46,9 @@ export default function ChatComposer({
     websocketUrl,
 }: ChatComposerProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const pickerRef = useRef<HTMLDivElement>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [localError, setLocalError] = useState("");
 
     const displayError = localError || chatError;
@@ -50,11 +62,23 @@ export default function ChatComposer({
         }
     }, [input, inputRef]);
 
+    // 点击外部关闭表情选择器
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (onSend(input)) {
             onInputChange("");
             setLocalError("");
+            setShowEmojiPicker(false);
         }
     }
 
@@ -63,6 +87,23 @@ export default function ChatComposer({
             event.preventDefault();
             event.currentTarget.form?.requestSubmit();
         }
+    }
+
+    function handleEmojiSelect(emoji: string) {
+        const textarea = inputRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newValue = input.substring(0, start) + emoji + input.substring(end);
+
+        onInputChange(newValue);
+
+        // 延迟恢复焦点并设置光标位置
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + emoji.length, start + emoji.length);
+        }, 0);
     }
 
     async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -128,7 +169,27 @@ export default function ChatComposer({
                     {displayError}
                 </p>
             )}
-            <div className="mx-auto flex w-full max-w-3xl items-end gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/60">
+            <div className="relative mx-auto flex w-full max-w-3xl items-end gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/60">
+                {showEmojiPicker && (
+                    <div
+                        ref={pickerRef}
+                        className="absolute bottom-full left-0 mb-4 h-64 w-72 overflow-y-auto rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-2xl backdrop-blur-xl transition-all duration-200"
+                    >
+                        <div className="grid grid-cols-7 gap-2">
+                            {COMMON_EMOJIS.map((emoji, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => handleEmojiSelect(emoji)}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition hover:bg-slate-100 hover:scale-110 active:scale-95"
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -136,19 +197,31 @@ export default function ChatComposer({
                     accept="image/*"
                     onChange={handleFileChange}
                 />
-                <button
-                    type="button"
-                    aria-label="上传图片"
-                    disabled={isUploading || connectionStatus !== "open"}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    {isUploading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                    ) : (
-                        <Image size={20} />
-                    )}
-                </button>
+
+                <div className="flex shrink-0 items-center gap-1">
+                    <button
+                        type="button"
+                        aria-label="上传图片"
+                        disabled={isUploading || connectionStatus !== "open"}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {isUploading ? (
+                            <Loader2 size={20} className="animate-spin" />
+                        ) : (
+                            <Image size={20} />
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
+                        aria-label="表情符号"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition hover:bg-slate-100 ${showEmojiPicker ? 'bg-slate-100 text-slate-900' : 'text-slate-500'}`}
+                    >
+                        <Smile size={20} />
+                    </button>
+                </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-1 items-end gap-3">
                     <label htmlFor="message" className="sr-only">
