@@ -1,11 +1,11 @@
-const defaultApiUrl = "http://117.72.96.233:8000";
+const defaultApiUrl = "http://127.0.0.1:8000";
 
 export const apiUrl = (
     process.env.NEXT_PUBLIC_API_URL?.trim() || defaultApiUrl
 ).replace(/\/+$/, "");
 
 export const chatApiUrl = (
-    process.env.NEXT_PUBLIC_CHAT_API_URL?.trim() || "http://127.0.0.1:8002"
+    process.env.NEXT_PUBLIC_CHAT_API_URL?.trim() || "http://127.0.0.1:8000"
 ).replace(/\/+$/, "");
 
 const authStorageKey = "chat_auth_session_v1";

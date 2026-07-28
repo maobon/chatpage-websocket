@@ -19,6 +19,9 @@ import {
 export type AuthStatus =
   "checking" | "authenticated" | "unauthenticated" | "error";
 
+// 内存缓存已验证通过的 Token，避免单次应用会话期间的重复验证请求。
+const verifiedTokens = new Set<string>();
+
 export function useAuthSession() {
   const snapshot = useSyncExternalStore(
     subscribeToAuth,
@@ -38,14 +41,20 @@ export function useAuthSession() {
     if (snapshot && !session) clearAuthSession();
   }, [session, snapshot]);
 
+  const isCached = useMemo(
+    () => (token ? verifiedTokens.has(token) : false),
+    [token],
+  );
+
   useEffect(() => {
-    if (!session || !token) return;
+    if (!session || !token || isCached) return;
 
     const controller = new AbortController();
 
     verifyAuthSession(session, controller.signal)
       .then((isValid) => {
         if (isValid) {
+          verifiedTokens.add(token);
           setVerifiedToken(token);
           setErrorToken(null);
           return;
@@ -61,7 +70,7 @@ export function useAuthSession() {
       });
 
     return () => controller.abort();
-  }, [session, token, verificationAttempt]);
+  }, [session, token, verificationAttempt, isCached]);
 
   const retry = useCallback(() => {
     setErrorToken(null);
@@ -72,7 +81,7 @@ export function useAuthSession() {
 
   if (!session || !token) {
     status = "unauthenticated";
-  } else if (verifiedToken === token) {
+  } else if (isCached || verifiedToken === token) {
     status = "authenticated";
   } else if (errorToken === token) {
     status = "error";

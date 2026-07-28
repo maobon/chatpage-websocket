@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const defaultWebsocketUrl = "ws://127.0.0.1:8002/ws";
+const defaultWebsocketUrl = "ws://127.0.0.1:8000/ws";
 
 export type ChatMessage =
     | {
@@ -34,9 +34,13 @@ export type ProtocolMessage =
 
 export type ConnectionStatus = "connecting" | "open" | "closed" | "error";
 
-export function useWebsocketChat(enabled: boolean) {
-    const websocketUrl =
+export function useWebsocketChat(enabled: boolean, token?: string) {
+    const baseWebsocketUrl =
         process.env.NEXT_PUBLIC_WEBSOCKET_URL ?? defaultWebsocketUrl;
+
+    const websocketUrl = token
+        ? `${baseWebsocketUrl}${baseWebsocketUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`
+        : baseWebsocketUrl;
     const socketRef = useRef<WebSocket | null>(null);
     const nextMessageId = useRef(1);
     const [messages, setMessages] = useState<ChatMessage[]>([]);

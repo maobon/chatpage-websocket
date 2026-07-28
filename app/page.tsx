@@ -15,7 +15,7 @@ export default function ChatPage() {
     const [input, setInput] = useState("");
     const auth = useAuthSession();
     const isAuthenticated = auth.status === "authenticated";
-    const chat = useWebsocketChat(isAuthenticated);
+    const chat = useWebsocketChat(isAuthenticated, auth.session?.accessToken);
 
     useEffect(() => {
         if (auth.status === "unauthenticated") {
