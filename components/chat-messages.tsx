@@ -91,7 +91,7 @@ export default function ChatMessages({ messages }: ChatMessagesProps) {
                                         <img
                                             src={message.url}
                                             alt="图片消息"
-                                            className="h-auto max-w-[50vw] object-contain"
+                                            className="h-auto max-w-[35vw] object-contain"
                                         />
                                     </a>
                                 )}
