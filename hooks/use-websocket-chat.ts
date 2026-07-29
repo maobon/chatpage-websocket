@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { clearAuthSession } from "../lib/auth";
 
 const defaultWebsocketUrl = "ws://127.0.0.1:8000/ws";
 
@@ -11,6 +12,7 @@ export type ChatMessage =
         type: "text";
         content: string;
         timestamp: number;
+        avatarUrl?: string;
     }
     | {
         id: number;
@@ -18,6 +20,7 @@ export type ChatMessage =
         type: "image";
         url: string;
         timestamp: number;
+        avatarUrl?: string;
     }
     | {
         id: number;
@@ -25,16 +28,17 @@ export type ChatMessage =
         type: "system";
         content: string;
         timestamp: number;
+        avatarUrl?: string;
     };
 
 export type ProtocolMessage =
-    | { type: "text"; content: string }
-    | { type: "image"; url: string }
-    | { type: "system"; content: string; timestamp?: string; sender?: string };
+    | { type: "text"; content: string; avatar_url?: string }
+    | { type: "image"; url: string; avatar_url?: string }
+    | { type: "system"; content: string; timestamp?: string; sender?: string; avatar_url?: string };
 
 export type ConnectionStatus = "connecting" | "open" | "closed" | "error";
 
-export function useWebsocketChat(enabled: boolean, token?: string) {
+export function useWebsocketChat(enabled: boolean, token?: string, avatarUrl?: string | null) {
     const baseWebsocketUrl =
         process.env.NEXT_PUBLIC_WEBSOCKET_URL ?? defaultWebsocketUrl;
 
@@ -89,6 +93,13 @@ export function useWebsocketChat(enabled: boolean, token?: string) {
                     parsed = { type: "text", content: String(event.data) };
                 }
 
+                // 处理系统消息：如果是 logout 指令则直接登出
+                if (parsed.type === "system" && parsed.content.startsWith("logout:")) {
+                    console.log("收到服务端强制登出指令:", parsed.content);
+                    clearAuthSession();
+                    return;
+                }
+
                 // 处理系统消息可能带有的字符串时间戳
                 const msgTimestamp = (parsed.type === "system" && parsed.timestamp)
                     ? new Date(parsed.timestamp).getTime()
@@ -101,6 +112,7 @@ export function useWebsocketChat(enabled: boolean, token?: string) {
                         role: "remote",
                         timestamp: isNaN(msgTimestamp) ? Date.now() : msgTimestamp,
                         ...parsed,
+                        avatarUrl: parsed.avatar_url,
                     } as ChatMessage,
                 ]);
             });
@@ -145,7 +157,11 @@ export function useWebsocketChat(enabled: boolean, token?: string) {
         }
 
         try {
-            const message: ProtocolMessage = { type: "text", content: normalizedContent };
+            const message: ProtocolMessage = {
+                type: "text",
+                content: normalizedContent,
+                avatar_url: avatarUrl || ""
+            };
             socket.send(JSON.stringify(message));
         } catch {
             setStatus("error");
@@ -161,11 +177,12 @@ export function useWebsocketChat(enabled: boolean, token?: string) {
                 type: "text",
                 content: normalizedContent,
                 timestamp: Date.now(),
+                avatarUrl: avatarUrl || "",
             },
         ]);
         setError("");
         return true;
-    }, []);
+    }, [avatarUrl]);
 
     const sendImage = useCallback((url: string) => {
         const socket = socketRef.current;
@@ -175,7 +192,11 @@ export function useWebsocketChat(enabled: boolean, token?: string) {
         }
 
         try {
-            const message: ProtocolMessage = { type: "image", url };
+            const message: ProtocolMessage = {
+                type: "image",
+                url,
+                avatar_url: avatarUrl || ""
+            };
             socket.send(JSON.stringify(message));
         } catch {
             setStatus("error");
@@ -191,11 +212,12 @@ export function useWebsocketChat(enabled: boolean, token?: string) {
                 type: "image",
                 url,
                 timestamp: Date.now(),
+                avatarUrl: avatarUrl || "",
             },
         ]);
         setError("");
         return true;
-    }, []);
+    }, [avatarUrl]);
 
     const reconnect = useCallback(() => {
         setStatus("connecting");

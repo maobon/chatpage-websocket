@@ -2,12 +2,14 @@
 import { useEffect, useRef } from "react";
 import { MessageSquareText, User, UsersRound } from "lucide-react";
 import type { ChatMessage } from "../hooks/use-websocket-chat";
+import type { AuthSession } from "../lib/auth";
 
 type ChatMessagesProps = {
     messages: ChatMessage[];
+    authSession?: AuthSession | null;
 };
 
-export default function ChatMessages({ messages }: ChatMessagesProps) {
+export default function ChatMessages({ messages, authSession }: ChatMessagesProps) {
     const endRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -51,26 +53,31 @@ export default function ChatMessages({ messages }: ChatMessagesProps) {
                     );
                 }
 
+                const isLocal = message.role === "local";
+                const userAvatar = isLocal ? (authSession?.avatar || message.avatarUrl) : message.avatarUrl;
+
                 return (
                     <article
                         key={message.id}
-                        className={`flex items-start gap-3 ${message.role === "local" ? "flex-row-reverse" : ""
+                        className={`flex items-start gap-3 ${isLocal ? "flex-row-reverse" : ""
                             }`}
                     >
                         <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm ${message.role === "remote"
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm overflow-hidden ${message.role === "remote"
                                 ? "bg-emerald-500 text-white"
                                 : "bg-slate-900 text-white"
                                 }`}
                         >
-                            {message.role === "local" ? (
+                            {userAvatar ? (
+                                <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : isLocal ? (
                                 <User size={18} />
                             ) : (
                                 <UsersRound size={18} />
                             )}
                         </div>
                         <div
-                            className={`flex max-w-[80%] flex-col gap-1 ${message.role === "local" ? "items-end" : "items-start"
+                            className={`flex max-w-[80%] flex-col gap-1 ${isLocal ? "items-end" : "items-start"
                                 }`}
                         >
                             <div

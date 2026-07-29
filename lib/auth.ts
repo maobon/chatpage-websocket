@@ -15,6 +15,7 @@ export type AuthSession = {
     accessToken: string;
     tokenType: string;
     username: string;
+    avatar?: string | null;
 };
 
 type Credentials = {
@@ -103,17 +104,35 @@ export async function verifyAuthSession(
         signal,
     });
 
-    if (response.ok) return true;
+    if (response.ok) {
+        const data = await response.json().catch(() => null);
+        console.log("lib/auth: /me response data:", data);
+        return data || true;
+    }
     // 当前服务会用 422 表示 JWT 无法解析，和 401/403 一样视为会话失效。
     if ([401, 403, 422].includes(response.status)) return false;
 
     throw new Error(`登录状态验证失败（${response.status}）`);
 }
 
+export function normalizeAvatarUrl(url: string | undefined | null): string | undefined {
+    if (!url || typeof url !== "string") return undefined;
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+        return url;
+    }
+    // 如果是相对路径，尝试拼接 chatApiUrl (通常图片存储在聊天后端)
+    // 调试提示：请确认图片存放的具体服务
+    const base = chatApiUrl || apiUrl;
+    return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 export function saveAuthSession(session: AuthSession) {
-    // 当前前端直接请求认证 API，因此在浏览器端持久化 access token。
-    // 若后续加入同源 BFF，建议改为由服务端写入 HttpOnly Cookie。
-    localStorage.setItem(authStorageKey, JSON.stringify(session));
+    // 存储前确保头像 URL 也是经过规范化的
+    const normalizedSession = {
+        ...session,
+        avatar: normalizeAvatarUrl(session.avatar)
+    };
+    localStorage.setItem(authStorageKey, JSON.stringify(normalizedSession));
     window.dispatchEvent(new Event(authChangeEvent));
 }
 
@@ -151,7 +170,8 @@ function isAuthSession(value: unknown): value is AuthSession {
         typeof session.tokenType === "string" &&
         Boolean(session.tokenType.trim()) &&
         typeof session.username === "string" &&
-        Boolean(session.username.trim())
+        Boolean(session.username.trim()) &&
+        (session.avatar === undefined || session.avatar === null || typeof session.avatar === "string")
     );
 }
 

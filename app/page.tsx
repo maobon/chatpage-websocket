@@ -15,7 +15,7 @@ export default function ChatPage() {
     const [input, setInput] = useState("");
     const auth = useAuthSession();
     const isAuthenticated = auth.status === "authenticated";
-    const chat = useWebsocketChat(isAuthenticated, auth.session?.accessToken);
+    const chat = useWebsocketChat(isAuthenticated, auth.session?.accessToken, auth.session?.avatar);
 
     useEffect(() => {
         if (auth.status === "unauthenticated") {
@@ -39,7 +39,7 @@ export default function ChatPage() {
                 connectionStatus={chat.status}
                 onReconnect={chat.reconnect}
             />
-            <ChatMessages messages={chat.messages} />
+            <ChatMessages messages={chat.messages} authSession={auth.session} />
             <ChatComposer
                 authSession={auth.session}
                 connectionStatus={chat.status}

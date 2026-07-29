@@ -11,7 +11,9 @@ import {
   clearAuthSession,
   getAuthSnapshot,
   getServerAuthSnapshot,
+  normalizeAvatarUrl,
   parseAuthSession,
+  saveAuthSession,
   subscribeToAuth,
   verifyAuthSession,
 } from "../lib/auth";
@@ -47,16 +49,35 @@ export function useAuthSession() {
   );
 
   useEffect(() => {
-    if (!session || !token || isCached) return;
+    // 即使 Token 已经缓存，如果 session 中没有头像，我们也应该验证一次以获取头像
+    const needsAvatarSync = session && !session.avatar;
+    if (!session || !token || (isCached && !needsAvatarSync)) {
+      return;
+    }
 
     const controller = new AbortController();
 
     verifyAuthSession(session, controller.signal)
-      .then((isValid) => {
-        if (isValid) {
+      .then((data) => {
+        // 打印服务端返回的内容，用于调试头像刷新问题
+        console.log("useAuthSession: /me 接口完整返回内容:", data);
+
+        if (data) {
           verifiedTokens.add(token);
           setVerifiedToken(token);
           setErrorToken(null);
+
+          // 严格按照用户提供的结构解析: extra.avatar_url
+          const extra = data?.extra;
+          const serverAvatarUrl = extra && typeof extra === "object" ? extra.avatar_url : null;
+
+          const finalAvatar = normalizeAvatarUrl(serverAvatarUrl);
+          console.log(">>> 最终解析出的头像地址:", finalAvatar);
+
+          if (session && finalAvatar && finalAvatar !== session.avatar) {
+            console.log("useAuthSession: 头像不一致，更新本地 Session");
+            saveAuthSession({ ...session, avatar: finalAvatar });
+          }
           return;
         }
 
