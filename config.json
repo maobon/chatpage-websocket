@@ -1,4 +1,4 @@
 {
-  "defaultApiUrl": "http://172.16.0.8:8000",
-  "defaultWebsocketUrl": "ws://172.16.0.8:8000/ws"
+  "defaultApiUrl": "http://localhost:8000",
+  "defaultWebsocketUrl": "ws://localhost:8000/ws"
 }
