@@ -11,6 +11,12 @@ function logToFile(message) {
   const timestamp = new Date().toISOString();
   const formattedMessage = `[${timestamp}] ${message}\n`;
   console.log(message);
+
+  const logDir = path.dirname(LOG_FILE);
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
   fs.appendFileSync(LOG_FILE, formattedMessage);
 }
 
