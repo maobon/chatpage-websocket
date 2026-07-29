@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ChatComposer from './chat-composer';
+import ChatComposer from '../../components/chat-composer';
 import React from 'react';
 
 describe('ChatComposer', () => {

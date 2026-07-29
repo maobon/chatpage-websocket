@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { login, register, verifyAuthSession, normalizeAvatarUrl, saveAuthSession, clearAuthSession, getAuthSnapshot, parseAuthSession } from './auth';
+import { login, register, verifyAuthSession, normalizeAvatarUrl, saveAuthSession, clearAuthSession, getAuthSnapshot, parseAuthSession } from '../../lib/auth';
 
 describe('auth lib', () => {
   beforeEach(() => {

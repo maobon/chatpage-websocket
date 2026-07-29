@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { useAuthSession } from './use-auth-session';
-import * as authLib from '../lib/auth';
+import { useAuthSession } from '../../hooks/use-auth-session';
+import * as authLib from '../../lib/auth';
 
-vi.mock('../lib/auth', async () => {
-  const actual = await vi.importActual('../lib/auth');
+vi.mock('../../lib/auth', async () => {
+  const actual = await vi.importActual('../../lib/auth');
   return {
     ...actual,
     verifyAuthSession: vi.fn(),
