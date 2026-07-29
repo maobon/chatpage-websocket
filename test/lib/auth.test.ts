@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { login, register, verifyAuthSession, normalizeAvatarUrl, saveAuthSession, clearAuthSession, getAuthSnapshot, parseAuthSession } from '../../lib/auth';
+import config from '../../config.json';
 
 describe('auth lib', () => {
   beforeEach(() => {
@@ -21,7 +22,7 @@ describe('auth lib', () => {
     it('should prepend base url for relative paths', () => {
       const path = '/avatars/1.png';
       const result = normalizeAvatarUrl(path);
-      expect(result).toContain('http://127.0.0.1:8000/avatars/1.png');
+      expect(result).toContain(`${config.defaultApiUrl}/avatars/1.png`);
     });
   });
 

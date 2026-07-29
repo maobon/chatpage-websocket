@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clearAuthSession } from "../lib/auth";
+import config from "../config.json";
 
-const defaultWebsocketUrl = "ws://127.0.0.1:8000/ws";
+const defaultWebsocketUrl = config.defaultWebsocketUrl;
 
 export type ChatMessage =
     | {
