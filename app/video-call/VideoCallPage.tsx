@@ -19,45 +19,57 @@ function parseRtcSignal(rawData: unknown): Peer.SignalData | null {
         // 1. 处理嵌套格式 {"type":"rtc", "offer":...}
         if (data.type === "rtc") {
             if (data.offer) {
-                return typeof data.offer === "string" ? { type: "offer", sdp: data.offer } : data.offer;
+                const sdp = typeof data.offer === "string" ? data.offer : data.offer.sdp;
+                return { type: "offer", sdp };
             }
             if (data.answer) {
-                return typeof data.answer === "string" ? { type: "answer", sdp: data.answer } : data.answer;
+                const sdp = typeof data.answer === "string" ? data.answer : data.answer.sdp;
+                return { type: "answer", sdp };
             }
             if (data.candidate) {
-                // 确保 candidate 格式符合 SimplePeer 期待的 SignalData
-                // 如果已经是包装好的对象 { candidate: { ... } } 则直接返回
-                if (typeof data.candidate === "object" && data.candidate.candidate) {
-                    return data.candidate as Peer.SignalData;
+                let cand = data.candidate;
+                // 处理双重包装的情况: { candidate: { candidate: "...", ... } }
+                if (cand.candidate && typeof cand.candidate === "object") {
+                    cand = cand.candidate;
                 }
-                // 如果是原始字符串或未包装的对象，则手动包装
-                if (typeof data.candidate === "string") {
-                    return {
-                        type: "candidate",
-                        candidate: {
-                            candidate: data.candidate,
-                            sdpMid: "0",
-                            sdpMLineIndex: 0
-                        }
-                    } as Peer.SignalData;
-                }
+
+                // 严格构造 RTCIceCandidateInit 对象
+                // 确保 sdpMLineIndex 是数字，sdpMid 是字符串
+                const normalizedCandidate = {
+                    candidate: typeof cand === "string" ? cand : (cand.candidate || ""),
+                    sdpMid: cand.sdpMid?.toString() || "0",
+                    sdpMLineIndex: cand.sdpMLineIndex !== undefined ? Number(cand.sdpMLineIndex) : 0
+                };
+
+                // SimplePeer 期待 candidate 信号是不带 type 字段的顶级 candidate 属性
+                // 或者带 type: "candidate" 的对象。这里采用标准包装格式。
                 return {
-                    type: "candidate",
-                    candidate: data.candidate
-                } as Peer.SignalData;
+                    candidate: normalizedCandidate
+                } as unknown as Peer.SignalData;
             }
             return null;
         }
 
         // 2. 处理原始 WebRTC/SimplePeer 格式
-        // 只有包含 offer/answer 标识或 candidate 字段的才被视为有效信令
-        if (data.type === "offer" || data.type === "answer" || data.candidate) {
+        if (data.type === "offer" || data.type === "answer") {
             return data as Peer.SignalData;
         }
 
-        // 3. 忽略其他非 WebRTC 报文（如聊天文本、系统消息等）
+        if (data.candidate) {
+            // 同样对原始格式的 candidate 进行规范化
+            const cand = data.candidate;
+            return {
+                candidate: {
+                    candidate: typeof cand === "string" ? cand : (cand.candidate || ""),
+                    sdpMid: cand.sdpMid?.toString() || "0",
+                    sdpMLineIndex: cand.sdpMLineIndex !== undefined ? Number(cand.sdpMLineIndex) : 0
+                }
+            } as unknown as Peer.SignalData;
+        }
+
         return null;
-    } catch {
+    } catch (err) {
+        console.error("parseRtcSignal Error:", err);
         return null;
     }
 }
@@ -152,11 +164,18 @@ export default function VideoCallPage() {
         };
 
         socket.onmessage = (event) => {
-            console.log("WS Received (Video):", event.data);
             try {
                 const rawData = event.data;
                 const signalData = parseRtcSignal(rawData);
-                if (!signalData) return;
+
+                // 打印解析后的结果，方便调试格式问题
+                if (signalData) {
+                    console.log("WS Processed Signal:", signalData);
+                } else {
+                    // 如果不是 RTC 信号，可能是普通聊天消息，直接打印原始数据
+                    console.log("WS Received (Non-RTC):", rawData);
+                    return;
+                }
 
                 if (signalData.type === "offer") {
                     // 如果已经存在 Peer，先销毁它以便重新连接
