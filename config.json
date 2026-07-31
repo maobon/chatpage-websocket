@@ -1,5 +1,18 @@
 {
-  "defaultApiUrl": "http://127.0.0.1:8000",
-  "defaultWebsocketUrl": "ws://127.0.0.1:8000/ws",
-  "iceServers": []
+  "defaultApiUrl": "http://117.72.96.233:8000",
+  "defaultWebsocketUrl": "ws://117.72.96.233:8000/ws",
+  "iceServers": [
+    {
+      "urls": [
+        "stun:117.72.96.233:3478"
+      ]
+    },
+    {
+      "urls": [
+        "turn:117.72.96.233:3478"
+      ],
+      "username": "test",
+      "credential": "123456"
+    }
+  ]
 }
