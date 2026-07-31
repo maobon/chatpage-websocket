@@ -90,6 +90,8 @@ export function useChat(
             socket.addEventListener("message", (event) => {
                 if (disposed) return;
 
+                console.log("WS Received (Chat):", event.data);
+
                 let parsed: ProtocolMessage;
                 const rawData = String(event.data);
                 try {

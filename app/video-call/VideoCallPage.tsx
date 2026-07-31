@@ -142,6 +142,7 @@ export default function VideoCallPage() {
         };
 
         socket.onmessage = (event) => {
+            console.log("WS Received (Video):", event.data);
             try {
                 const rawData = event.data;
                 const signalData = parseRtcSignal(rawData);
