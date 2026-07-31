@@ -1,12 +1,13 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { LogIn, LogOut, MessageSquareText } from "lucide-react";
+import { LogIn, LogOut, MessageSquareText, Video } from "lucide-react";
 import type { AuthSession } from "../lib/auth";
 import { clearAuthSession } from "../lib/auth";
-import type { ConnectionStatus } from "../hooks/use-websocket-chat";
-import AvatarModal from "./avatar-modal";
+import type { ConnectionStatus } from "../hooks/useChat";
+import AvatarModal from "./AvatarModal";
 
 const statusView: Record<
   ConnectionStatus,
@@ -41,7 +42,6 @@ export default function ChatHeader({
   connectionStatus,
   onReconnect,
 }: ChatHeaderProps) {
-  console.log("ChatHeader: rendering with avatar:", authSession?.avatar);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const currentStatus = statusView[connectionStatus];
   const canReconnect =
@@ -78,6 +78,15 @@ export default function ChatHeader({
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {authSession && (
+              <Link
+                href="/video-call"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-950"
+                title="视频通话"
+              >
+                <Video size={18} />
+              </Link>
+            )}
             {canReconnect && (
               <button
                 type="button"
@@ -116,7 +125,7 @@ export default function ChatHeader({
         </div>
       </header>
 
-      {authSession && (
+      {authSession && isAvatarModalOpen && (
         <AvatarModal
           isOpen={isAvatarModalOpen}
           onClose={() => setIsAvatarModalOpen(false)}

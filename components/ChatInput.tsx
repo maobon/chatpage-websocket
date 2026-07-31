@@ -9,7 +9,7 @@ import {
     useState,
 } from "react";
 import { Image, Loader2, SendHorizontal, Smile } from "lucide-react";
-import type { ConnectionStatus } from "../hooks/use-websocket-chat";
+import type { ConnectionStatus } from "../hooks/useChat";
 import { chatApiUrl, AuthSession } from "../lib/auth";
 
 const COMMON_EMOJIS = [
@@ -22,7 +22,7 @@ const COMMON_EMOJIS = [
     "💙", "💜", "🖤", "💯", "💢", "💥", "💫", "💦", "💨", "🕳️", "💣", "💬", "👁️‍🗨️", "🗨️", "🗯️", "💭", "💤"
 ];
 
-type ChatComposerProps = {
+type ChatInputProps = {
     authSession: AuthSession;
     connectionStatus: ConnectionStatus;
     error: string;
@@ -34,7 +34,7 @@ type ChatComposerProps = {
     websocketUrl: string;
 };
 
-export default function ChatComposer({
+export default function ChatInput({
     authSession,
     connectionStatus,
     error: chatError,
@@ -44,7 +44,7 @@ export default function ChatComposer({
     onSend,
     onSendImage,
     websocketUrl,
-}: ChatComposerProps) {
+}: ChatInputProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
     const [isUploading, setIsUploading] = useState(false);

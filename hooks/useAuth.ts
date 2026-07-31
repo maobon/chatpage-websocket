@@ -24,7 +24,7 @@ export type AuthStatus =
 // 内存缓存已验证通过的 Token，避免单次应用会话期间的重复验证请求。
 const verifiedTokens = new Set<string>();
 
-export function useAuthSession() {
+export function useAuth() {
   const snapshot = useSyncExternalStore(
     subscribeToAuth,
     getAuthSnapshot,
@@ -59,9 +59,6 @@ export function useAuthSession() {
 
     verifyAuthSession(session, controller.signal)
       .then((data) => {
-        // 打印服务端返回的内容，用于调试头像刷新问题
-        console.log("useAuthSession: /me 接口完整返回内容:", data);
-
         if (data) {
           verifiedTokens.add(token);
           setVerifiedToken(token);
@@ -72,10 +69,8 @@ export function useAuthSession() {
           const serverAvatarUrl = extra && typeof extra === "object" ? extra.avatar_url : null;
 
           const finalAvatar = normalizeAvatarUrl(serverAvatarUrl);
-          console.log(">>> 最终解析出的头像地址:", finalAvatar);
 
           if (session && finalAvatar && finalAvatar !== session.avatar) {
-            console.log("useAuthSession: 头像不一致，更新本地 Session");
             saveAuthSession({ ...session, avatar: finalAvatar });
           }
           return;

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { LoaderCircle, LockKeyhole, RefreshCw } from "lucide-react";
-import type { AuthStatus } from "../hooks/use-auth-session";
+import type { AuthStatus } from "../hooks/useAuth";
 
-type AuthGateProps = {
+type AuthGuardProps = {
   authStatus: Exclude<AuthStatus, "authenticated">;
   onRetry: () => void;
 };
 
-export default function AuthGate({ authStatus, onRetry }: AuthGateProps) {
+export default function AuthGuard({ authStatus, onRetry }: AuthGuardProps) {
   const hasVerificationError = authStatus === "error";
 
   return (

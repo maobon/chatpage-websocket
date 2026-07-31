@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { login, register, verifyAuthSession, normalizeAvatarUrl, saveAuthSession, clearAuthSession, getAuthSnapshot, parseAuthSession } from '../../lib/auth';
+import { login, normalizeAvatarUrl, saveAuthSession, clearAuthSession, getAuthSnapshot, parseAuthSession } from '../../lib/auth';
 import config from '../../config.json';
 
 describe('auth lib', () => {
@@ -28,23 +28,23 @@ describe('auth lib', () => {
 
   describe('login', () => {
     it('should throw error when api returns invalid token', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      vi.mocked(fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({})
-      });
+      } as Response);
 
       await expect(login({ username: 'test', password: 'password' }))
         .rejects.toThrow('登录接口未返回有效的 access token。');
     });
 
     it('should return auth session on success', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      vi.mocked(fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           access_token: 'valid_token',
           token_type: 'bearer'
         })
-      });
+      } as Response);
 
       const session = await login({ username: 'test', password: 'password' });
       expect(session).toEqual({

@@ -108,7 +108,6 @@ export async function verifyAuthSession(
 
     if (response.ok) {
         const data = await response.json().catch(() => null);
-        console.log("lib/auth: /me response data:", data);
         return data || true;
     }
     // 当前服务会用 422 表示 JWT 无法解析，和 401/403 一样视为会话失效。

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ChatComposer from '../../components/chat-composer';
+import { render, screen, fireEvent } from '@testing-library/react';
+import ChatInput from '../../components/ChatInput';
 import React from 'react';
 
-describe('ChatComposer', () => {
+describe('ChatInput', () => {
   const mockProps = {
     authSession: { accessToken: 't', tokenType: 'Bearer', username: 'u' },
     connectionStatus: 'open' as const,
@@ -21,7 +21,7 @@ describe('ChatComposer', () => {
   });
 
   it('should call onInputChange when typing', () => {
-    render(<ChatComposer {...mockProps} />);
+    render(<ChatInput {...mockProps} />);
     const textarea = screen.getByPlaceholderText(/输入消息/);
     fireEvent.change(textarea, { target: { value: 'hello' } });
     expect(mockProps.onInputChange).toHaveBeenCalledWith('hello');
@@ -29,20 +29,20 @@ describe('ChatComposer', () => {
 
   it('should call onSend when clicking send button', () => {
     const propsWithInput = { ...mockProps, input: 'hello' };
-    render(<ChatComposer {...propsWithInput} />);
+    render(<ChatInput {...propsWithInput} />);
     const sendButton = screen.getByLabelText('发送消息');
     fireEvent.click(sendButton);
     expect(mockProps.onSend).toHaveBeenCalledWith('hello');
   });
 
   it('should disabled send button when input is empty', () => {
-    render(<ChatComposer {...mockProps} input="" />);
+    render(<ChatInput {...mockProps} input="" />);
     const sendButton = screen.getByLabelText('发送消息');
     expect(sendButton).toBeDisabled();
   });
 
   it('should show emoji picker when clicking emoji button', () => {
-    render(<ChatComposer {...mockProps} />);
+    render(<ChatInput {...mockProps} />);
     const emojiButton = screen.getByLabelText('表情符号');
     fireEvent.click(emojiButton);
 

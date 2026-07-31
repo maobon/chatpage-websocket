@@ -1,15 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef } from "react";
 import { MessageSquareText, User, UsersRound } from "lucide-react";
-import type { ChatMessage } from "../hooks/use-websocket-chat";
+import type { ChatMessage } from "../hooks/useChat";
 import type { AuthSession } from "../lib/auth";
 
-type ChatMessagesProps = {
+type ChatListProps = {
     messages: ChatMessage[];
     authSession?: AuthSession | null;
 };
 
-export default function ChatMessages({ messages, authSession }: ChatMessagesProps) {
+export default function ChatList({ messages, authSession }: ChatListProps) {
     const endRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { beforeAll, afterEach, afterAll, vi } from 'vitest';
+import { vi } from 'vitest';
 
 // 简单的 Mock localStorage
 const localStorageMock = (function() {
@@ -32,4 +32,4 @@ class MockWebSocket {
   send = vi.fn();
   close = vi.fn();
 }
-(global as any).WebSocket = MockWebSocket;
+(global as unknown as { WebSocket: typeof MockWebSocket }).WebSocket = MockWebSocket;

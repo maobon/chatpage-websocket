@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
-import { useAuthSession } from '../../hooks/use-auth-session';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useAuth } from '../../hooks/useAuth';
 import * as authLib from '../../lib/auth';
 
 vi.mock('../../lib/auth', async () => {
@@ -11,16 +11,16 @@ vi.mock('../../lib/auth', async () => {
   };
 });
 
-describe('useAuthSession', () => {
+describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-    // 强制刷新 snapshop
+    // 强制刷新 snapshot
     window.dispatchEvent(new Event('storage'));
   });
 
   it('should return unauthenticated when no session exists', () => {
-    const { result } = renderHook(() => useAuthSession());
+    const { result } = renderHook(() => useAuth());
     expect(result.current.status).toBe('unauthenticated');
   });
 
@@ -35,7 +35,7 @@ describe('useAuthSession', () => {
     vi.spyOn(authLib, 'getAuthSnapshot').mockReturnValue(JSON.stringify(mockSession));
     vi.mocked(authLib.verifyAuthSession).mockResolvedValue({ username: 'testuser' });
 
-    const { result } = renderHook(() => useAuthSession());
+    const { result } = renderHook(() => useAuth());
 
     // 初始状态应为 checking
     expect(result.current.status).toBe('checking');
@@ -56,7 +56,7 @@ describe('useAuthSession', () => {
     vi.mocked(authLib.verifyAuthSession).mockResolvedValue(false); // 验证失败
     const clearSpy = vi.spyOn(authLib, 'clearAuthSession');
 
-    renderHook(() => useAuthSession());
+    renderHook(() => useAuth());
 
     await waitFor(() => {
       expect(clearSpy).toHaveBeenCalled();

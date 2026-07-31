@@ -2,7 +2,13 @@
   "name": "chat-ui",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=11.0.0"
+  },
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev": "next dev",
     "predev": "node scripts/check-services.mjs",
     "build": "next build",
@@ -19,7 +25,8 @@
     "lucide-react": "1.26.0",
     "next": "16.2.11",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "simple-peer": "^9.11.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
@@ -28,11 +35,11 @@
     "@types/node": "26.1.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "@types/simple-peer": "^9.11.9",
     "@vitejs/plugin-react": "^6.0.4",
     "eslint": "9.39.5",
     "eslint-config-next": "16.2.11",
     "jsdom": "^30.0.0",
-    "msw": "^2.15.0",
     "postcss": "8.5.22",
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",

@@ -35,11 +35,17 @@ export type ChatMessage =
 export type ProtocolMessage =
     | { type: "text"; content: string; avatar_url?: string }
     | { type: "image"; url: string; avatar_url?: string }
-    | { type: "system"; content: string; timestamp?: string; sender?: string; avatar_url?: string };
+    | { type: "system"; content: string; timestamp?: string; sender?: string; avatar_url?: string }
+    | { type: "rtc"; offer?: unknown; answer?: unknown; candidate?: unknown; sender?: string };
 
 export type ConnectionStatus = "connecting" | "open" | "closed" | "error";
 
-export function useWebsocketChat(enabled: boolean, token?: string, avatarUrl?: string | null) {
+export function useChat(
+    enabled: boolean,
+    token?: string,
+    avatarUrl?: string | null,
+    onRtcMessage?: (msg: ProtocolMessage) => void
+) {
     const baseWebsocketUrl =
         process.env.NEXT_PUBLIC_WEBSOCKET_URL ?? defaultWebsocketUrl;
 
@@ -85,18 +91,26 @@ export function useWebsocketChat(enabled: boolean, token?: string, avatarUrl?: s
                 if (disposed) return;
 
                 let parsed: ProtocolMessage;
+                const rawData = String(event.data);
                 try {
-                    parsed = JSON.parse(String(event.data));
-                    if (!parsed.type || !["text", "image", "system"].includes(parsed.type)) {
+                    parsed = JSON.parse(rawData);
+                    if (!parsed.type) {
                         throw new Error("Invalid format");
                     }
                 } catch {
-                    parsed = { type: "text", content: String(event.data) };
+                    parsed = { type: "text", content: rawData };
+                }
+
+                // 处理 WebRTC 信令
+                if (parsed.type === "rtc") {
+                    if (onRtcMessage) {
+                        onRtcMessage(parsed);
+                    }
+                    return; // RTC 消息不存入聊天历史
                 }
 
                 // 处理系统消息：如果是 logout 指令则直接登出
                 if (parsed.type === "system" && parsed.content.startsWith("logout:")) {
-                    console.log("收到服务端强制登出指令:", parsed.content);
                     clearAuthSession();
                     return;
                 }
@@ -147,7 +161,7 @@ export function useWebsocketChat(enabled: boolean, token?: string, avatarUrl?: s
             if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
             socketRef.current = null;
         };
-    }, [connectionAttempt, enabled, websocketUrl]);
+    }, [connectionAttempt, enabled, websocketUrl, onRtcMessage]);
 
     const sendMessage = useCallback((content: string) => {
         const socket = socketRef.current;
