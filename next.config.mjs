@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 允许公网 IP 访问开发服务器的热更新资源
+  experimental: {
+    allowedDevOrigins: ['117.72.96.233'],
+  },
   async rewrites() {
     return [
       {
