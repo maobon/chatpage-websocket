@@ -26,6 +26,11 @@ function parseRtcSignal(rawData: unknown): Peer.SignalData | null {
             }
             if (data.candidate) {
                 // 确保 candidate 格式符合 SimplePeer 期待的 SignalData
+                // 如果已经是包装好的对象 { candidate: { ... } } 则直接返回
+                if (typeof data.candidate === "object" && data.candidate.candidate) {
+                    return data.candidate as Peer.SignalData;
+                }
+                // 如果是原始字符串或未包装的对象，则手动包装
                 if (typeof data.candidate === "string") {
                     return {
                         type: "candidate",
@@ -36,7 +41,10 @@ function parseRtcSignal(rawData: unknown): Peer.SignalData | null {
                         }
                     } as Peer.SignalData;
                 }
-                return data.candidate as Peer.SignalData;
+                return {
+                    type: "candidate",
+                    candidate: data.candidate
+                } as Peer.SignalData;
             }
             return null;
         }
@@ -94,11 +102,13 @@ export default function VideoCallPage() {
             console.error("WebRTC 错误:", err);
             setStatus(`连接错误: ${err.message}`);
             setIsConnected(false);
+            peerRef.current = null;
         });
 
         peer.on("close", () => {
             setIsConnected(false);
             setStatus("连接已断开");
+            peerRef.current = null;
         });
 
         // 监听 ICE 状态
@@ -148,7 +158,14 @@ export default function VideoCallPage() {
                 const signalData = parseRtcSignal(rawData);
                 if (!signalData) return;
 
-                if (!peerRef.current && signalData.type === "offer") {
+                if (signalData.type === "offer") {
+                    // 如果已经存在 Peer，先销毁它以便重新连接
+                    if (peerRef.current) {
+                        console.log("检测到新呼叫，正在重置旧连接...");
+                        peerRef.current.destroy();
+                        peerRef.current = null;
+                        setIsConnected(false);
+                    }
                     initializePeer(signalData);
                 } else if (peerRef.current) {
                     peerRef.current.signal(signalData);
